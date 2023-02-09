@@ -1,6 +1,5 @@
-# How to create jango
+# How to start up app
 plz run command
 ```
 docker-compose up -d
 ```
-# Engineering_Design
