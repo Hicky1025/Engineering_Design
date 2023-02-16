@@ -4,7 +4,9 @@
   <!-- ============================== ここから以下を追加 ============================== -->
   <!-- Content Header (Page header) -->
   <section class="content-header">
-      <h1>部署名(仮)</h1>
+      {% if user.is_authenticated %}
+      <h1>部署名:{{ user.get_department }}</h1>
+      {% endif %}
       <ol class="breadcrumb">
           <li><a href="#"><i class="fa fa-dashboard"></i> ホーム</a></li>
           <li class="active">ダッシュボード</li>

@@ -41,7 +41,11 @@ INSTALLED_APPS = [
     'bootstrap4',
     'widget_tweaks',
     'pdfmr',
+    'accounts',
 ]
+
+# Application definition
+AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
