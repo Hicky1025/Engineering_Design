@@ -5,8 +5,10 @@ import re
 
 # 読み込むファイルのリスト
 file_list = ["template_1.docx", "template_2.docx", "template_3.xlsx", "template_4.xlsx"]
+
 # インスタンス化したファイルを格納するリスト
-file_obj = []
+obj_list = []
+
 # 共通箇所名を格納するリスト
 # 後にdict型で値と関連付ける
 commons = []
@@ -15,9 +17,14 @@ commons = []
 def find_common(obj):
 
     global commons
+
+    # 抽出するパターン
     pattern = '\{.*?\}'
 
+    #　docxの時はtryの処理
     try:
+        # docxのオブジェクトがtable（：表）を持てばTrue
+        # 以下、tableのセルの値に対して正規表現とマッチする文字列の抽出
         if bool(obj.tables) == True:
             for table in obj.tables:
                 for row in table.rows:
@@ -25,66 +32,73 @@ def find_common(obj):
                         for common_text in re.findall(pattern, cell.text):
                             commons.append(common_text)
         
+        # docxの段落に対して正規表現とマッチする文字列の抽出
         for paragraph in obj.paragraphs:
             for common_text in re.findall(pattern, paragraph.text):
                 commons.append(common_text)
 
+    # xlsxはparagraphsパラメータを持たないからAttributeErrorが出る
+    # エラーが出るか出ないかでdocxとxlsxを区別してる
     except AttributeError:
+        # xlsxの各シートのセルの対して正規表現とマッチする文字列の抽出
         for sheet_name in obj.sheetnames:
             sheet = obj[sheet_name]
             for row in sheet:
                 for cell in row:
+                    # 文字列型以外をreplaceの引数に与えるとエラーが出る
                     if type(cell.value) == str:
                         for common_text in re.findall(pattern, cell.value):
                             commons.append(common_text)
 
+# ファイルをDocument,workbookオブジェクトに変換する処理
 for num, file_name in enumerate(file_list):
     # ファイルがdocxのときの処理
     if file_name.endswith(".docx") == True:
-        file_obj.append(Document(file_name))
-        find_common(file_obj[num])
+        obj_list.append(Document(file_name))
+        find_common(obj_list[num])
 
     # ファイルがxlsxのときの処理
     else:
-        file_obj.append(pxl.load_workbook(file_name))
-        find_common(file_obj[num])
+        obj_list.append(pxl.load_workbook(file_name))
+        find_common(obj_list[num])
 
 
-# 重複した値を除く処理
+# 作成したcommonsの重複した値を除く処理
 # set(commons)でもいけるけど、元のリストの順序を保持したいから以下の通りにしてる
 # 詳細 : https://note.nkmk.me/python-list-unique-duplicate/
 commons = list(dict.fromkeys(commons))
 
-doc_1 = Document("template_1.docx")
-doc_2 = Document("template_2.docx")
-table = doc_2.tables[0]
-
-xlsx_3 = pxl.load_workbook("./template_3.xlsx")
-xlsx_4 = pxl.load_workbook("./template_4.xlsx")
-xlsx_value = xlsx_4["Sheet1"]
-
+# 置換したい値
 value = [
 
 ]
 
-# value_list[0] : カラム名, value_list[1] : データ
+# 共通箇所の名前とデータを辞書型で関連付ける
 value_dic = dict(zip(commons, value))
 
-for key in value_dic:
-    for paragraph in doc_1.paragraphs:
-        paragraph.text = paragraph.text.replace(key, value_dic[key])
+# 置換・保存処理
+for num, obj_class in enumerate(obj_list):
+    for key in value_dic:
+        try:
+            if bool(obj_class.tables) == True:
+                for table in obj_class.tables:
+                    for row in table.rows:
+                        for cell in row.cells:
+                            if key in cell.text:
+                                cell.text = cell.text.replace(key, value_dic[key])
+            
+            for paragraph in obj_class.paragraphs:
+                paragraph.text = paragraph.text.replace(key, value_dic[key])
+            
+            save_filename = "edit_" + str(num) + ".docx"
+            obj_class.save(save_filename)
+        
+        except AttributeError:
+            for sheet in obj_class.sheetnames:
+                for row in obj_class[sheet]:
+                    for cell in row:
+                        if type(cell.value) == str:
+                            cell.value = cell.value.replace(key, value_dic[key])
 
-    for row in table.rows:
-        for cell in row.cells:
-            if key in cell.text:
-                cell.text = cell.text.replace(key, value_dic[key])
-
-    for row in xlsx_value:
-        for cell in row:
-            if type(cell.value) == str:
-                cell.value = cell.value.replace(key, value_dic[key])
-
-# edit.docx　を新規作成
-# doc_1.save("./edit_1.docx")
-# doc_2.save("./edit_2.docx")
-# xlsx_4.save("./edit_4.xlsx")
+            save_filename = "edit_" + str(num) + ".xlsx"
+            obj_class.save(save_filename)
