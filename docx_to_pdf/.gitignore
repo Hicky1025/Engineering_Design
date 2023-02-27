@@ -1,3 +1,6 @@
-sample.docx
-sample2.docx
-sample.pdf
+idea1/*.docx
+idea1/*.xlsx
+idea1/*.pdf
+idea2/*.docx
+idea2/*.xlsx
+idea2/*.pdf
