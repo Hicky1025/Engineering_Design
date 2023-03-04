@@ -1,6 +1,0 @@
-mysqlclient
-django
-django-bootstrap4
-django-upload-validator
-django-widgets-improved
-pdfminer.six
