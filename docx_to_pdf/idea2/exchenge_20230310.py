@@ -23,54 +23,37 @@ obj_list = []
 # 後にdict型で値と関連付ける
 commons = []
 
-# 共通箇所を見つける関数
-def find_common(obj):
-
-    global commons
-
-    # 抽出するパターン
-    pattern = '\{.*?\}'
-
-    #　docxの時はtryの処理
-    try:
-        # docxのオブジェクトがtable（：表）を持てばTrue
-        # 以下、tableのセルの値に対して正規表現とマッチする文字列の抽出
-        if bool(obj.tables) == True:
-            for table in obj.tables:
-                for row in table.rows:
-                    for cell in row.cells:
-                        for common_text in re.findall(pattern, cell.text):
-                            commons.append(common_text)
-        
-        # docxの段落に対して正規表現とマッチする文字列の抽出
-        for paragraph in obj.paragraphs:
-            for common_text in re.findall(pattern, paragraph.text):
-                commons.append(common_text)
-
-    # xlsxはparagraphsパラメータを持たないからAttributeErrorが出る
-    # エラーが出るか出ないかでdocxとxlsxを区別してる
-    except AttributeError:
-        # xlsxの各シートのセルの対して正規表現とマッチする文字列の抽出
-        for sheet_name in obj.sheetnames:
-            sheet = obj[sheet_name]
-            for row in sheet:
-                for cell in row:
-                    # 文字列型以外をreplaceの引数に与えるとエラーが出る
-                    if type(cell.value) == str:
-                        for common_text in re.findall(pattern, cell.value):
-                            commons.append(common_text)
+# 正規表現のパターン
+pattern = '\{.*?\}'
 
 # ファイルをDocument,workbookオブジェクトに変換する処理
 for num, file_name in enumerate(file_list):
     # ファイルがdocxのときの処理
     if file_name.endswith(".docx") == True:
         obj_list.append(Document(save_path + file_name))
-        find_common(obj_list[num])
+        if bool(obj_list[num].tables) == True:
+            for table in obj_list[num].tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for common_text in re.findall(pattern, cell.text):
+                            commons.append(common_text)
+        
+        # docxの段落に対して正規表現とマッチする文字列の抽出
+        for paragraph in obj_list[num].paragraphs:
+            for common_text in re.findall(pattern, paragraph.text):
+                commons.append(common_text)
 
     # ファイルがxlsxのときの処理
     else:
         obj_list.append(pxl.load_workbook(save_path + file_name))
-        find_common(obj_list[num])
+        for sheet_name in obj_list[num].sheetnames:
+            sheet = obj_list[num][sheet_name]
+            for row in sheet:
+                for cell in row:
+                    # 文字列型以外をreplaceの引数に与えるとエラーが出る
+                    if type(cell.value) == str:
+                        for common_text in re.findall(pattern, cell.value):
+                            commons.append(common_text)
 
 
 # 作成したcommonsの重複した値を除く処理

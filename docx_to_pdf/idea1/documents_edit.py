@@ -77,6 +77,6 @@ limit_date.text = "第２　　使用期間は、令和" + limit_year + "年" + 
 doc_1.save("./sample.doc_1x")
 
 # wardファイルのPDF化
-inputfile = "./sample.doc_1x"
+inputfile = "./sample.docx"
 outputfile = "./sample.pdf"
 convert(inputfile, outputfile)
